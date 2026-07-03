@@ -1,0 +1,14 @@
+# ingress-node
+#
+# Client-facing gateway. Terminates inbound client connections and
+# forwards traffic to the egress node.
+#
+# FROM <base image>
+#
+# RUN <install gateway packages>
+#
+# COPY <config templates>
+#
+# EXPOSE <client-facing port>
+#
+# ENTRYPOINT <gateway start command>
