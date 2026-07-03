@@ -1,0 +1,14 @@
+# egress-node
+#
+# Internet-facing gateway. Receives tunneled traffic from the ingress
+# node and NATs it out to the internet.
+#
+# FROM <base image>
+#
+# RUN <install NAT / forwarding packages>
+#
+# COPY <config templates>
+#
+# EXPOSE <tunnel port>
+#
+# ENTRYPOINT <gateway start command>
