@@ -1,0 +1,15 @@
+[Unit]
+Description=Initialize Incus with ZFS storage pool
+After=incus.service network-online.target
+Requires=incus.service
+Wants=network-online.target
+ConditionPathExists=!/var/lib/incus/.incus-init-done
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/incus-init.sh
+ExecStartPost=/bin/touch /var/lib/incus/.incus-init-done
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target

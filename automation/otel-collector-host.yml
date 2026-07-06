@@ -1,0 +1,68 @@
+# Runs on the Hetzner VM host as a systemd service.
+# Reads journal + host metrics natively (no namespace/permission issues).
+# Forwards everything via OTLP to the otel LXC aggregator.
+extensions:
+  zpages:
+    endpoint: 0.0.0.0:55679
+
+receivers:
+  journald:
+    directory: /var/log/journal
+    units: []
+    priority: info
+    start_at: end
+    resource:
+      host.name: tok-kombuha-dev
+      job: integrations/node_exporter
+      instance: tok-kombuha-dev
+      cluster: tok-kombuha
+
+  host_metrics:
+    collection_interval: 30s
+    scrapers:
+      cpu: {}
+      memory: {}
+      disk: {}
+      filesystem:
+        exclude_mount_points:
+          mount_points: [/dev/*, /proc/*, /sys/*, /run/*, /snap/*]
+          match_type: regexp
+      network: {}
+      load: {}
+
+  prometheus:
+    config:
+      scrape_configs:
+        - job_name: integrations/node_exporter
+          scrape_interval: 30s
+          static_configs:
+            - targets: [127.0.0.1:9100]
+              labels:
+                instance: tok-kombuha-dev
+                cluster: tok-kombuha
+
+exporters:
+  otlp_grpc:
+    # otel LXC DNS name on the Incus bridge — resolvable after Incus is up
+    endpoint: "otel.dev.tok-kombuha.com:4317"
+    tls:
+      insecure: true
+
+processors:
+  batch: {}
+  resource_detection:
+    detectors: [system]
+    system:
+      hostname_sources: [os]
+
+service:
+  extensions: [zpages]
+  pipelines:
+    logs:
+      receivers: [journald]
+      processors: [batch, resource_detection]
+      exporters: [otlp_grpc]
+    metrics:
+      receivers: [host_metrics, prometheus]
+      processors: [batch, resource_detection]
+      exporters: [otlp_grpc]
